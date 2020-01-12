@@ -12,13 +12,15 @@ import os
 import Handler
 
 
-
-
 PORT = Handler.PORT
 PSIZE = Handler.PSIZE
 LOC_IP = "127.0.0.1"
             
-
+######################################################################################
+#
+#    awaits a file or directory sent by the client            
+# 
+#######################################################################################
 class pyFileSlingServer(Thread):
     def __init__(self,port_number,name="bronson"):
         Thread.__init__(self)
@@ -37,7 +39,7 @@ class pyFileSlingServer(Thread):
     def run(self):
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         s.bind(("",self.port))   
-        s.listen(1) # Accepts up to 10 connections.
+        s.listen(10) # Accepts up to 10 connections.
         
         
         cnt = 0
@@ -53,50 +55,13 @@ class pyFileSlingServer(Thread):
             
         s.close()
         print("server end1 ",cnt)
-        
-            
-            
-    def X(self,sc): 
-            cnt=0
-            cmd = "go"
-            while cmd == "go":    
-                bmsg = "NOK%"         
-                fn = sc.recv(PSIZE)                                        
-                msg = fn.decode("ascii")
-                print("received",msg)
-                ze = re.split("%",msg)            
-                print("command",ze[0]) 
-                
-                if ze[0] == "21":
-                    filepath = ze[1]
-                    bmsg = "OK%"                    
-                elif ze[0] == "23":
-                    dirnam = ze[1]
-                    bmsg = "OK%"
-                elif ze[0] == "27" or cnt > 10:
-                    print("ende",filepath,dirnam)
-                    self.RunFlag = False     
-                    cmd = "stop"
-                    sc.close()
-                
-                else:
-                    print("unknown package received") 
-
-                if not cmd == "stop":
-                    bmsg = bmsg.encode('ascii').ljust(8,b'0')     
-                    sc.send(bmsg) 
-                
-                cnt += 1    
-                         
-            
-
-    
+     
     def loadconfig(self):
         try:            
             self.config = self.loadjson(self.cfile)
             print("loaded",self.config)
         except:
-            print("Error loading config\n\ncreate default file")    
+            print("Error loading config\n\ncreate default file\n")    
             
         
     def savejson(self,fnam,data):  
@@ -141,10 +106,5 @@ if __name__ == "__main__":
         
     P = pyFileSlingServer(dir,port)
     P.start()   
-    
-    
-    
-    
-     
     
     

@@ -7,7 +7,6 @@ import sys
 from PyQt5.QtWidgets import (QWidget, QAction, QLabel,QMenuBar, QMenu,qApp,QPushButton,
                             QFrame, QLineEdit, QGridLayout, QApplication,QListWidgetItem,QListWidget)
 from PyQt5.QtGui import QColor, QFont, QPainter ,QIcon 
-from PyQt5 import QtWidgets 
 from PyQt5.Qt import QStatusBar, QMainWindow, QDialog
 from threading import Thread
 import socket
@@ -20,78 +19,35 @@ import Handler
 PORT = Handler.PORT
 PSIZE = Handler.PSIZE
 LOC_IP = "127.0.0.1"
-NOK = "47%OK"
-OK = "48%OK%" 
-PING = "49%PING%"
-PONG = "50%PONG%"
-ENDE = "57%ENDE%"
-FILE_SIZE = "51%FSIZE%"
-FILE_NAME = "52%FNAM%"
-DIR_NAME = "53%DNAM%"
-HOME_DIR = "54%HDIR%"
-FILE_START = "55%FSTART%"
-FILE_END = "56%FEND%"
-SHUT_DOWN = "58%SHTDWN%"
-FILE_INFO = "59%FINFO%"
 
 
-class SendingHandler(Thread):
-    def __init__(self,parent,fileordir,pad):
-        Thread.__init__(self)
-        self.parent = parent
-        self.s = socket        
-        self.f = fileordir
-        self.d = pad
-        self.RunFlag = True
-        self.SockClosed = False
-        
-    def connectit(self):
-        s = None
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)            
-            s.connect((LOC_IP, PORT))            
-            ping = PING.encode('ascii').ljust(PSIZE,b'0')            
-            s.send(ping)      
-            pong = s.recv(PSIZE)           
-            ans = pong.decode('ascii')                        
-            print("first pong",ans) 
-        except:
-            print("No socket connection possible")
-            s.close()
-            s = None
-        return s    
-        
-        
-    def run(self):
-        s = self.connectit()
-        if s == None:
-            return            
-        print("run Sending handler")
-        
-        time.sleep(2)
-        
-        s.close() 
-        self.SockClosed = True
-        
  
-
-class XFrame(QFrame):
+#################################################
+#
+# Represents class definition the coloured Pad
+# handles the drag n drop mechanism
+#
+#################################################
+# 
+class ColoredPad(QFrame):
       
-    def __init__(self,parent):
-        super().__init__(parent)
-        self.name = "Jeff"
+    def __init__(self,parent,name='Jef'):
+        super().__init__(parent)        
         self.par = parent
+        self.name = name
         self.setAcceptDrops(True)
         self.path_str = "no_init"
         self.standard_bgcol = self.backgroundRole() 
         
-        self.pad_data={'name':self.name,'port':PORT,'ip':"",'dir':""}
+        self.pad_data={'name':'??','port':PORT,'ip':"",'dir':""}
         
         self.msglen = PSIZE
         self.colordirtable = {'Red':'dir1','Blue':'dir2','Green':'dir3','Yellow':'dir4'}
         self.hands = []
    
-       
+    # 
+    # when a file is dragged onto the pad it will sent it to the configured server
+    #   
     def start_con(self,fnam1):
         print("gui send :"+fnam1+":")
                 
@@ -139,10 +95,9 @@ class XFrame(QFrame):
         qp.setBrush(QColor("White"))
         qp.drawRect(5,40,80,13)
 
-        #formato
         qp.setPen(QColor("Black"))
         qp.setFont(QFont('Helvetica', 10))
-        qp.drawText(10, 50, self.name)#path_str) 
+        qp.drawText(10, 50, self.pad_data['name'])#path_str) 
         
     def contextMenuEvent(self, event):       
         cmenu = QMenu(self)        
@@ -154,18 +109,27 @@ class XFrame(QFrame):
         action = cmenu.exec_(self.mapToGlobal(event.pos()))
        
         if action == quitAct:
-            qApp.quit()  
+            qApp.quit() 
+            
+        # 'Settings Menu is clicked' opens the Pad Dialog     
         elif action == setAct:
             print("settings of",self.name)
             
-            pdialog = PadDialog(self.par,)
+            pdialog = PadSettingsDlg(self.par,self.name)
             if pdialog.exec_() == QDialog.Accepted: 
                 self.pad_data = pdialog.GetValue()
                 
-  
-                  
-    
-
+                
+    def updatePadData(self,paddata):
+        self.pad_data = paddata
+        # TODO
+        
+        
+#################################################
+#
+# 
+#
+#################################################
 class Pads(QWidget):
     
     def __init__(self,parent):
@@ -189,7 +153,7 @@ class Pads(QWidget):
             if col == '':
                 continue
             
-            square = XFrame(self)
+            square = ColoredPad(self)
             square.setGeometry(10, 10, 100, 100)
            
             square.setStyleSheet("QWidget { background-color: %s }" % col )           
@@ -239,17 +203,22 @@ class MainWin(QMainWindow):
         self.show()        
         
    
-   
-class PadDialog(QDialog):
-    def __init__(self, parent=None,pad_data={'name':'Jeff'}):
-        super(PadDialog, self).__init__(parent)
+#######################################
+#
+# Opens when the settings of a pad 
+# are opened with right mouse click 
+#
+#######################################
+class PadSettingsDlg(QDialog):
+    
+    def __init__(self, parent=None,pad_data={'name':'Jeff1'}):
+        super(PadSettingsDlg, self).__init__(parent)
         self.result = ""
-        self.name = pad_data['name']
-            
+        self.name = pad_data['name']            
             
         layout = QGridLayout()       
         row=0
-        
+                
         l_ip = QLabel("Name:")  
         layout.addWidget(l_ip,row,0)
         self.namefield = QLineEdit(self.name)
@@ -285,14 +254,16 @@ class PadDialog(QDialog):
         layout.addWidget(self.but_cancel ,row,3)
         self.but_cancel.clicked.connect(self.OnCancel)
         
-        #================================================= ===============================
+        #================================================================================
         #
-        #================================================= ===============================
+        #================================================================================
         self.setWindowTitle('PyFileSling v0.1')   
         self.setLayout(layout)
         self.setGeometry(300, 200, 460, 350)
         
-    
+    #================================================================================
+    # save the settings
+    #================================================================================
     def OnOk(self):
         print("onok")
         
@@ -301,7 +272,8 @@ class PadDialog(QDialog):
         port = self.portfield.text()
         dir  = self.dirfield.text()  
         
-        self.pad_data = {'name':name,'port':port,'dir':dir,'ip':ip}        
+        self.pad_data = {'name':name,'port':port,'dir':dir,'ip':ip}    
+        print(self.pad_data)    
             
         self.close()        
         return "OK"

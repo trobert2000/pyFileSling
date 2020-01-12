@@ -18,9 +18,17 @@ PORT = 40002
 PSIZE = 128
 LOC_IP = "127.0.0.1"
 
-
+######################################################################################
+#
+#                Handles the network interaction
+# it is either initialized as a server or as a client. the server 
+# awaits the files sent by  the client. The client sends a file or 
+# a whole directory when it is dragged and droppend onto one of the colored pads 
+#
+#######################################################################################
 class Handler(Thread):
     
+    # protocol definition    
     CMD_NOK = "47%NOK%"
     CMD_OK = "48%OK%" 
     CMD_PING = "49%PING%"
@@ -63,6 +71,7 @@ class Handler(Thread):
         ret_msg = self.CMD_PONG
         cnt = 0
         freccnt = 0
+        
         while self.RunFlag:# and cnt < 50:
             ret_msg = self.CMD_NOK  
             ans = self._decmsg()
@@ -76,8 +85,11 @@ class Handler(Thread):
                 ze = self._getdatafrommsg(ans)
                 path = os.path.join(self.my_path,ze[2])
                 myd,tail = os.path.split(path)
-                print("s file rec:",myd,tail,path,ze[3])                
+                print("s file rec:",myd,tail,path,ze[3])
+                mydstr=':'+myd+':'
+                print('isdir ' + str(os.path.isdir(myd))+ '  '+ mydstr)                
                 if os.path.isdir(myd):
+                    
                     self._sendp(self.CMD_OK)   
                     time.sleep(0.2)  
                     self._recvfile(path,int(ze[3]))
@@ -123,12 +135,12 @@ class Handler(Thread):
             if ans.find(self.CMD_OK) == 0:
                 print("rec ok")
                 
-                for file in (v for _,v in fdata.items() if v['t'] == 'f'):     
-                    self._sendfile(file)
-                    self._sendp(self.CMD_FILE_END)  
-                    time.sleep(0.1)          
-                    ans = self._decmsg() 
-                    print("cli after fend",ans)
+                #for file in (v for _,v in fdata.items() if v['t'] == 'f'):     
+                #    self._sendfile(file)
+                #    self._sendp(self.CMD_FILE_END)  
+                #    time.sleep(0.1)          
+                #    ans = self._decmsg() 
+                #    print("cli after fend",ans)
             
             else:
                 print("rec nok break")
@@ -257,8 +269,12 @@ class Handler(Thread):
         return fdata    
     
     def _decmsg(self):
+        retval = ''
         msg_b = self.sock.recv(PSIZE)
-        return msg_b.decode('ascii')
+        
+        retval = msg_b.decode('ascii')        
+          
+        return retval 
     
     def _sendp(self,msg):  
         print("send",msg)      
