@@ -14,7 +14,7 @@ from sys import argv
 import json
 import os
 
-PORT = 40002
+PORT = 40004
 PSIZE = 128
 LOC_IP = "127.0.0.1"
 
@@ -72,9 +72,16 @@ class Handler(Thread):
         cnt = 0
         freccnt = 0
         
+        last_file_name = ""
+        
         while self.RunFlag:# and cnt < 50:
             ret_msg = self.CMD_NOK  
+            print("exc "+ last_file_name)
+                # the message from the client
+                        
             ans = self._decmsg()
+            
+            
             print(freccnt,"s",ans)
             
             if ans.find(self.CMD_PING) == 0:
@@ -85,9 +92,9 @@ class Handler(Thread):
                 ze = self._getdatafrommsg(ans)
                 path = os.path.join(self.my_path,ze[2])
                 myd,tail = os.path.split(path)
-                print("s file rec:",myd,tail,path,ze[3])
-                mydstr=':'+myd+':'
-                print('isdir ' + str(os.path.isdir(myd))+ '  '+ mydstr)                
+                print("s file rec:",myd,tail,path,ze[3]) 
+                last_file_name = ze[3]               
+                              
                 if os.path.isdir(myd):
                     
                     self._sendp(self.CMD_OK)   
@@ -120,35 +127,44 @@ class Handler(Thread):
     
     def run_client(self):
         print("run client",self.my_path)
+        file_cnt = 0
+        dir_cnt = 0
         
         fdata = self._getfilestosend(self.my_path)
         print(len(fdata))
         self.sock = self._connect()
         
-        # directories before files        
-        for dir in (v for _,v in fdata.items() if v['t'] == 'd'):     
+        # go through directories
+        # send mkdir for new dir      
+        for dir in (v for _,v in fdata.items() if v['t'] == 'd'):              
+             
             msg = self.CMD_MKDIR + dir['remp'] + "%"       
-            print("cli",msg)
+            print("mkdir msg",msg)
             self._sendp(msg) 
             time.sleep(0.1)         
             ans = self._decmsg()
-            if ans.find(self.CMD_OK) == 0:
-                print("rec ok")
-                
-                #for file in (v for _,v in fdata.items() if v['t'] == 'f'):     
-                #    self._sendfile(file)
-                #    self._sendp(self.CMD_FILE_END)  
-                #    time.sleep(0.1)          
-                #    ans = self._decmsg() 
-                #    print("cli after fend",ans)
             
+            # when the directory has been made 
+            if ans.find(self.CMD_OK) == 0:
+                dir_cnt += 1
+                print("cli: rec ok " + dir['remp'])
+                
+                for file in (v for _,v in fdata.items() if v['t'] == 'f'):     
+                    self._sendfile(file)
+                    self._sendp(self.CMD_FILE_END)  
+                    time.sleep(0.1)          
+                    ans = self._decmsg() 
+                    print("cli after fend",ans)
+                    file_cnt += 1
+             
             else:
                 print("rec nok break")
                 break 
-        #    if v['t'] == 'f':
-        #        self._sendfile(v)
+            #if v['t'] == 'f':
+            #    self._sendfile(v)
         
         self._sendp(self.CMD_SHTDWN)
+        print("sent files "+file_cnt+" dirs: "+dir_cnt)
        
     def run(self):
         print("Handler")
@@ -232,6 +248,8 @@ class Handler(Thread):
     
     def _getfilestosend(self,rdir):
         
+        print('walk dir ' + rdir)
+        
         fdata = {}                
         if os.path.isdir(rdir):
             idx = rdir.rfind(os.path.sep)
@@ -269,16 +287,34 @@ class Handler(Thread):
         return fdata    
     
     def _decmsg(self):
-        retval = ''
         msg_b = self.sock.recv(PSIZE)
-        
-        retval = msg_b.decode('ascii')        
-          
-        return retval 
+        try:  
+            retval = msg_b.decode('ascii')
+        except:
+            print(int(msg_b[0]))
+            for b in msg_b:
+                if b > 128:
+                    print(b)
+        return retval   
+    
+    def _decmsg2(self):
+        msg_b = self.sock.recv(PSIZE)
+        x = None
+        try:
+            print(msg_b)
+            x = msg_b.decode('ascii')
+        except:           
+            for b in msg_b:
+                print(int(b))
+                print(b) 
+               
+            
+        return   x
     
     def _sendp(self,msg):  
-        print("send",msg)      
+        print("send msg ",msg)      
         self.sock.send(msg.encode('ascii').ljust(PSIZE,b'0'))
+        
         
     def _connect(self):        
         s = None        

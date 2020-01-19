@@ -75,6 +75,7 @@ class ColoredPad(QFrame):
             pstr = pstr[len("file://"):]   
                    
         self.path_str = pstr 
+        print("path to send "+pstr)
         print(e.mimeData().text(),mycol)
         self.repaint()  
               
