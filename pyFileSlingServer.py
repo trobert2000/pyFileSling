@@ -2,12 +2,10 @@
 
 
 import socket
-import sys
 import time
 from threading import Thread
-import re
 from sys import argv
-import json
+import jsonconfig
 import os
 import Handler
 
@@ -29,9 +27,9 @@ class pyFileSlingServer(Thread):
         self.port = PORT
         self.name = name
         
-        self.cfile = r'fsling.json'
-        self.config = self.loadconfig()
-        #self.savejson(self.cfile,self.config)
+        self.cfile = r'fsling.json'        
+        self.config = jsonconfig.loadjson(self.cfile)
+        #jsonconfig.(self.cfile,self.config)
         self.msglen = PSIZE
         self.RunFlag = True
        
@@ -55,30 +53,6 @@ class pyFileSlingServer(Thread):
             
         s.close()
         print("server end1 ",cnt)
-     
-    def loadconfig(self):
-        try:            
-            self.config = self.loadjson(self.cfile)
-            print("loaded",self.config)
-        except:
-            print("Error loading config\n\ncreate default file\n")    
-            
-        
-    def savejson(self,fnam,data):  
-        try:      
-            with open(fnam,"w") as f:
-                json.dump(data,f,indent=4)
-        except:
-            print("Error saving",fnam)       
-            
-    def loadjson(self,fnam):
-        data = []
-        try:
-            with open(fnam,"r") as f:
-                data = json.load(f)
-        except:
-            print("Error loading",fnam)       
-        return data            
     
     def makedirs(self,rdir):
         dirs = [self.config['dir1'],self.config['dir2'],self.config['dir3'],self.config['dir4']]

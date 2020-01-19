@@ -6,12 +6,9 @@ Created on Jun 13, 2019
 '''
 
 import socket
-import sys
 import time
 from threading import Thread
 import re
-from sys import argv
-import json
 import os
 
 PORT = 40004
@@ -28,7 +25,8 @@ LOC_IP = "127.0.0.1"
 #######################################################################################
 class Handler(Thread):
     
-    # protocol definition    
+    # protocol definition   
+    CMD_CFG = "23%CFG" 
     CMD_NOK = "47%NOK%"
     CMD_OK = "48%OK%" 
     CMD_PING = "49%PING%"
@@ -111,11 +109,14 @@ class Handler(Thread):
             elif ans.find(self.CMD_MKDIR) == 0:                
                 ze = self._getdatafrommsg(ans)  
                 self._mkdir(ze[2])                
-                ret_msg = self.CMD_OK                      
+                ret_msg = self.CMD_OK       
+                
+            elif ans.find(self.CMD_CFG) == 0:    
+                print("serv rec CFG")    
+                               
             elif ans.find(self.CMD_SHTDWN) == 0:
                 self.RunFlag = False  
                 #ret_msg = self.CMD_OK 
-                 
             else:
                 print("?")
                 return                     
