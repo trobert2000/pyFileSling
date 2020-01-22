@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-
-
 import sys
 from PyQt5.QtWidgets import (QWidget, QAction, QLabel,QMenuBar, QMenu,qApp,QPushButton,
                             QFrame, QLineEdit, QGridLayout, QApplication,QListWidgetItem,QListWidget)
@@ -22,12 +20,13 @@ LOC_IP = "127.0.0.1"
 
 
  
-#################################################
+###########################################################
 #
-# Represents class definition the coloured Pad
+# Represents class definitions for the coloured Pads- 
+# GUI-components and methods
 # handles the drag n drop mechanism
 #
-#################################################
+###########################################################
 # 
 class ColoredPad(QFrame):
       
@@ -45,13 +44,15 @@ class ColoredPad(QFrame):
         self.colordirtable = {'Red':'dir1','Blue':'dir2','Green':'dir3','Yellow':'dir4'}
         self.hands = []
    
-    # 
+    # ===========================================================================
+    #
     # when a file is dragged onto the pad it will sent it to the configured server
-    #   
+    #
+    # ==============================================================================   
     def start_con(self,fnam1):
         print("gui send :"+fnam1+":")
                 
-        # for each interaction a new handler ist stored in the list
+        # for each file send a new handler(Thread) ist stored in the list
         h = Handler.Handler(None,2,fnam1)
         h.start()     
         self.hands.append(h)
@@ -87,7 +88,7 @@ class ColoredPad(QFrame):
         qp.end()
         
     def draw_rect(self,event, qp):
-        #Black Rectangle
+        # Rectangle for text background
         col = QColor("White")
         col.setNamedColor("White")
         qp.setPen(col)
@@ -124,12 +125,12 @@ class ColoredPad(QFrame):
         self.pad_data = paddata
         # TODO
         
-        
-#################################################
+
+#####################################################
 #
-# 
+# The Pads Widget contains the four Frames/Squares 
 #
-#################################################
+######################################################
 class Pads(QWidget):
     
     def __init__(self,parent):
@@ -145,11 +146,9 @@ class Pads(QWidget):
         self.setLayout(grid)        
         
         cols = ['Red', 'Blue', 'Green', 'Yellow']
-        
         positions = [(i,j) for i in range(2) for j in range(2)]
         
         for position, col in zip(positions,cols):
-            
             if col == '':
                 continue
             
@@ -162,8 +161,6 @@ class Pads(QWidget):
             
         #self.move(300, 150)
         self.setGeometry(300, 150, 800, 800)
-        #self.setWindowTitle('PyDrop ' + self.version)
-        
         
         exitAct = QAction(QIcon('exit.png'), '&Exit', self)        
         exitAct.setShortcut('Ctrl+Q')
@@ -172,36 +169,8 @@ class Pads(QWidget):
         
         self.show()
        
-     
-class MainWin(QMainWindow):
-    
-    def __init__(self):
-        super().__init__()        
-        self.initUI()              
-        
-    def initUI(self):               
-        # MainWindows has the status bar and the menu strip 
-        
-        # pads contains the four squares
-        pads = Pads(self)        
-        self.setCentralWidget(pads)  
-        
-        # MenuBar
-        exitAct = QAction(QIcon('exit.png'), '&Exit', self)        
-        exitAct.setShortcut('Ctrl+Q')
-        exitAct.setStatusTip('Exit application')
-        exitAct.triggered.connect(qApp.quit)
+ 
 
-        menubar = self.menuBar()
-        fileMenu = menubar.addMenu('&File')
-        fileMenu.addAction(exitAct)
-        
-        self.statusBar().showMessage('Ready')
-        
-        self.setGeometry(100, 100, 500, 500)
-        self.setWindowTitle('PyFileSling v0.1')    
-        self.show()        
-        
    
 #######################################
 #
@@ -254,9 +223,6 @@ class PadSettingsDlg(QDialog):
         layout.addWidget(self.but_cancel ,row,3)
         self.but_cancel.clicked.connect(self.OnCancel)
         
-        #================================================================================
-        #
-        #================================================================================
         self.setWindowTitle('PyFileSling v0.1')   
         self.setLayout(layout)
         self.setGeometry(300, 200, 460, 350)
@@ -283,6 +249,39 @@ class PadSettingsDlg(QDialog):
     
     def GetValue(self):
         return self.pad_data 
+    
+###########################################################
+#
+# MainWindows has the status bar and the menu strip
+#
+###########################################################    
+class MainWin(QMainWindow):
+    
+    def __init__(self):
+        super().__init__()        
+        self.initUI()              
+        
+    def initUI(self):               
+        # pads contains the four squares
+        pads = Pads(self)        
+        self.setCentralWidget(pads)  
+        
+        # MenuBar
+        exitAct = QAction(QIcon('exit.png'), '&Exit', self)        
+        exitAct.setShortcut('Ctrl+Q')
+        exitAct.setStatusTip('Exit application')
+        exitAct.triggered.connect(qApp.quit)
+
+        menubar = self.menuBar()
+        fileMenu = menubar.addMenu('&File')
+        fileMenu.addAction(exitAct)
+        
+        self.statusBar().showMessage('Ready')
+        
+        self.setGeometry(100, 100, 500, 500)
+        self.setWindowTitle('PyFileSling v0.1')    
+        self.show()        
+        
             
 if __name__ == '__main__':
     
@@ -290,8 +289,12 @@ if __name__ == '__main__':
     ex = MainWin()
     sys.exit(app.exec_())
     
-    #hx = Handler.Handler(None,2,r'/home/od/zeug/test/')
-    #hx.start()
-    
-    
+#================================================================================
+#
+#================================================================================       
+#################################################
+#
+# 
+#
+#################################################
     
